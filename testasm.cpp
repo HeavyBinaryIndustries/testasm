@@ -6,6 +6,7 @@
 #include "ws_asm.h"
 #include "sy_ml.h"
 #include <sstream>
+#include <stdlib.h>
 
 using namespace std;
 
@@ -159,7 +160,7 @@ vector <string> sizes = {
 
 vector<vector<string>> ParseParam(char* str) {
   int start = 0, len = 0;
-  std::vector<std::vector<std::string> > vec;
+  std::vector<std::vector<std::string>> vec;
   std::string s(str);
   while(*str) {
     switch (*str) {
@@ -182,7 +183,7 @@ vector<vector<string>> ParseParam(char* str) {
   return vec;
 }
 
-string GetParam(vector<vector<string> > vec, string p) {
+string GetParam(vector<vector<string>> vec, string p) {
   for (int i = 0; i < vec.size(); i++) {
     if (vec[i].size() < 2) continue;
     if (vec[i][0] == p) return vec[i][1];
@@ -250,13 +251,12 @@ string OprdString(string type, string base, string index, string scale, string o
 
 int main() {
   char buff[0xffff];
-  int i = fread(buff, 1, 0xfffe, stdin);
-  buff[i] = 0;
+  strncpy(buff, getenv("QUERY_STRING"), 0xfffe);
   vector<vector<string>> params = ParseParam(buff);
 
   XHTML xhtml;
   xhtml.GetBody()->AddList("h1")->AddContent("test assembler");
-  MLList* form = xhtml.GetBody()->AddList("div", {{"style", "width: 1080px;"}})->AddList("form", {{"action", "testasm.cgi"}, {"method", "post"}});
+  MLList* form = xhtml.GetBody()->AddList("div", {{"style", "width: 1080px;"}})->AddList("form", {{"action", "testasm.cgi"}, {"method", "get"}});
   MLList* table = form->AddList("table", {{"border", "1"}, {"width", "100%"}});
 
   MLList* line = table->AddList("tr");
@@ -316,6 +316,14 @@ int main() {
   line->AddList("td")->AddList("input", {{"type", "number"}, {"name", "oprd3offset"}});
 
   form->AddList("input", {{"type", "submit"}, {"value", "確定"}, {"style", "width:300px; height:48px; font-size:36px; float:right;"}});
+
+  xhtml.GetBody()->AddList("h4")->AddContent("例");
+  MLList* list = xhtml.GetBody()->AddList("ul");
+  list->AddList("li")->AddList("a", {{"href", "/cgi-bin/testasm.cgi?instruction=add&cc=o&oprd1type=reg&oprd2type=reg&oprd3type=none&oprd1base=eax&oprd2base=ecx&oprd3base=none&oprd1index=none&oprd2index=none&oprd3index=none&oprd1scale=1&oprd2scale=1&oprd3scale=1&oprd1width=1&oprd2width=1&oprd3width=1&oprd1offset=&oprd2offset=&oprd3offset="}})->AddContent("add %eax, %ecx");
+  list->AddList("li")->AddList("a", {{"href", "/cgi-bin/testasm.cgi?instruction=push&cc=o&oprd1type=reg&oprd2type=none&oprd3type=none&oprd1base=ebp&oprd2base=none&oprd3base=none&oprd1index=none&oprd2index=none&oprd3index=none&oprd1scale=1&oprd2scale=1&oprd3scale=1&oprd1width=1&oprd2width=1&oprd3width=1&oprd1offset=&oprd2offset=&oprd3offset="}})->AddContent("push %ebp");
+  list->AddList("li")->AddList("a", {{"href", "/cgi-bin/testasm.cgi?instruction=mov&cc=o&oprd1type=reg&oprd2type=reg&oprd3type=none&oprd1base=esp&oprd2base=ebp&oprd3base=none&oprd1index=none&oprd2index=none&oprd3index=none&oprd1scale=1&oprd2scale=1&oprd3scale=1&oprd1width=1&oprd2width=1&oprd3width=1&oprd1offset=&oprd2offset=&oprd3offset="}})->AddContent("mov %esp, %ebp");
+  list->AddList("li")->AddList("a", {{"href", "/cgi-bin/testasm.cgi?instruction=mov&cc=o&oprd1type=imm&oprd2type=reg&oprd3type=none&oprd1base=none&oprd2base=eax&oprd3base=none&oprd1index=none&oprd2index=none&oprd3index=none&oprd1scale=1&oprd2scale=1&oprd3scale=1&oprd1width=1&oprd2width=1&oprd3width=1&oprd1offset=&oprd2offset=&oprd3offset="}})->AddContent("mov $0, %eax");
+
   xhtml.GetBody()->AddList("h4")->AddContent("参考");
   xhtml.GetBody()->AddList("h5")->AddContent("IA-32 インテル® アーキテクチャソフトウェア・デベロッパーズ・マニュアル");
   MLList* ref = xhtml.GetBody()->AddList("ul");
